@@ -1,0 +1,88 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "notification_service.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+python_classes = ["Test*", "*Test", "*Tests"]
+python_functions = ["test_*"]
+testpaths = ["tests"]
+addopts = [
+    "--reuse-db",
+    "--nomigrations",
+    "--cov=core",
+    "--cov=api",
+    "--cov=adapters",
+    "--cov=events",
+    "--cov=infrastructure",
+    "--cov=health_check",
+    "--cov-report=html:htmlcov",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+    "--strict-config"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests that take significant time",
+    "external: Tests that require external services",
+    "database: Tests that require database access",
+    "api: API endpoint tests",
+    "models: Model tests",
+    "services: Service layer tests",
+    "adapters: Adapter tests",
+    "fixtures: Tests using fixtures"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = [
+    "core",
+    "api", 
+    "adapters",
+    "events",
+    "infrastructure",
+    "health_check"
+]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/venv/*",
+    "*/env/*",
+    "manage.py",
+    "*/settings/*",
+    "*/wsgi.py",
+    "*/asgi.py",
+    "*/__init__.py"
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

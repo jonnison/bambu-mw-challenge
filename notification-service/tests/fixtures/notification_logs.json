@@ -1,0 +1,121 @@
+[
+  {
+    "model": "core.notificationlog",
+    "pk": 1,
+    "fields": {
+      "template": 1,
+      "user_id": "user123",
+      "recipient": "user123@example.com",
+      "status": "sent",
+      "channel": "email",
+      "content": "Hello John Doe, welcome to our amazing service! We're excited to have you on board.",
+      "error_message": null,
+      "sent_at": "2024-01-01T10:15:00Z",
+      "delivered_at": null,
+      "created_at": "2024-01-01T10:15:00Z",
+      "updated_at": "2024-01-01T10:15:00Z"
+    }
+  },
+  {
+    "model": "core.notificationlog",
+    "pk": 2,
+    "fields": {
+      "template": 1,
+      "user_id": "user123",
+      "recipient": "user123@example.com",
+      "status": "delivered",
+      "channel": "email",
+      "content": "Hello John Doe, welcome to our amazing service! We're excited to have you on board.",
+      "error_message": null,
+      "sent_at": "2024-01-01T09:00:00Z",
+      "delivered_at": "2024-01-01T09:05:00Z",
+      "created_at": "2024-01-01T09:00:00Z",
+      "updated_at": "2024-01-01T09:05:00Z"
+    }
+  },
+  {
+    "model": "core.notificationlog",
+    "pk": 3,
+    "fields": {
+      "template": 3,
+      "user_id": "user456",
+      "recipient": "+1234567890",
+      "status": "sent",
+      "channel": "sms",
+      "content": "Order 12345 confirmed! Total: $99.99. Expected delivery: 2024-01-05",
+      "error_message": null,
+      "sent_at": "2024-01-01T12:30:00Z",
+      "delivered_at": null,
+      "created_at": "2024-01-01T12:30:00Z",
+      "updated_at": "2024-01-01T12:30:00Z"
+    }
+  },
+  {
+    "model": "core.notificationlog",
+    "pk": 4,
+    "fields": {
+      "template": 2,
+      "user_id": "user789",
+      "recipient": "user789@example.com",
+      "status": "failed",
+      "channel": "email",
+      "content": "Hi Jane Smith, click here to reset your password: https://example.com/reset/abc123",
+      "error_message": "SMTP server unavailable",
+      "sent_at": null,
+      "delivered_at": null,
+      "created_at": "2024-01-01T08:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    }
+  },
+  {
+    "model": "core.notificationlog",
+    "pk": 5,
+    "fields": {
+      "template": 4,
+      "user_id": "user123",
+      "recipient": "device_token_abc123",
+      "status": "delivered",
+      "channel": "push",
+      "content": "You have a new message from Alice Johnson",
+      "error_message": null,
+      "sent_at": "2024-01-01T14:00:00Z",
+      "delivered_at": "2024-01-01T14:00:05Z",
+      "created_at": "2024-01-01T14:00:00Z",
+      "updated_at": "2024-01-01T14:00:05Z"
+    }
+  },
+  {
+    "model": "core.notificationlog",
+    "pk": 6,
+    "fields": {
+      "template": 1,
+      "user_id": "user456",
+      "recipient": "user456@example.com",
+      "status": "pending",
+      "channel": "email",
+      "content": "Hello Bob Wilson, welcome to our amazing service! We're excited to have you on board.",
+      "error_message": null,
+      "sent_at": null,
+      "delivered_at": null,
+      "created_at": "2024-01-01T15:00:00Z",
+      "updated_at": "2024-01-01T15:00:00Z"
+    }
+  },
+  {
+    "model": "core.notificationlog",
+    "pk": 7,
+    "fields": {
+      "template": 3,
+      "user_id": "user789",
+      "recipient": "+9876543210",
+      "status": "read",
+      "channel": "sms",
+      "content": "Order 67890 confirmed! Total: $149.99. Expected delivery: 2024-01-03",
+      "error_message": null,
+      "sent_at": "2024-01-01T11:00:00Z",
+      "delivered_at": "2024-01-01T11:00:10Z",
+      "created_at": "2024-01-01T11:00:00Z",
+      "updated_at": "2024-01-01T11:30:00Z"
+    }
+  }
+]

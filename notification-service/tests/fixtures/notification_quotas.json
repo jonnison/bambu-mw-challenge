@@ -1,0 +1,67 @@
+[
+  {
+    "model": "core.notificationquota",
+    "pk": 1,
+    "fields": {
+      "user_id": "user123",
+      "channel": "email",
+      "quota_limit": 100,
+      "quota_used": 25,
+      "reset_period": "daily",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "core.notificationquota",
+    "pk": 2,
+    "fields": {
+      "user_id": "user123",
+      "channel": "sms",
+      "quota_limit": 50,
+      "quota_used": 10,
+      "reset_period": "daily",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T09:00:00Z"
+    }
+  },
+  {
+    "model": "core.notificationquota",
+    "pk": 3,
+    "fields": {
+      "user_id": "user456",
+      "channel": "email",
+      "quota_limit": 200,
+      "quota_used": 5,
+      "reset_period": "weekly",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T08:00:00Z"
+    }
+  },
+  {
+    "model": "core.notificationquota",
+    "pk": 4,
+    "fields": {
+      "user_id": "user789",
+      "channel": "email",
+      "quota_limit": 75,
+      "quota_used": 75,
+      "reset_period": "daily",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T11:00:00Z"
+    }
+  },
+  {
+    "model": "core.notificationquota",
+    "pk": 5,
+    "fields": {
+      "user_id": "user789",
+      "channel": "push",
+      "quota_limit": 500,
+      "quota_used": 150,
+      "reset_period": "hourly",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T11:30:00Z"
+    }
+  }
+]

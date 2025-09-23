@@ -1,0 +1,77 @@
+[
+  {
+    "model": "core.notificationtemplate",
+    "pk": 1,
+    "fields": {
+      "name": "Welcome Email",
+      "template_type": "email",
+      "subject": "Welcome to our service",
+      "content": "Hello {{user_name}}, welcome to our amazing service! We're excited to have you on board.",
+      "variables": ["user_name"],
+      "is_active": true,
+      "created_at": "2024-01-01T10:00:00Z",
+      "updated_at": "2024-01-01T10:00:00Z",
+      "deleted_at": null
+    }
+  },
+  {
+    "model": "core.notificationtemplate",
+    "pk": 2,
+    "fields": {
+      "name": "Password Reset",
+      "template_type": "email",
+      "subject": "Reset your password",
+      "content": "Hi {{user_name}}, click here to reset your password: {{reset_link}}",
+      "variables": ["user_name", "reset_link"],
+      "is_active": true,
+      "created_at": "2024-01-01T11:00:00Z",
+      "updated_at": "2024-01-01T11:00:00Z",
+      "deleted_at": null
+    }
+  },
+  {
+    "model": "core.notificationtemplate",
+    "pk": 3,
+    "fields": {
+      "name": "Order Confirmation SMS",
+      "template_type": "sms",
+      "subject": null,
+      "content": "Order {{order_id}} confirmed! Total: {{total_amount}}. Expected delivery: {{delivery_date}}",
+      "variables": ["order_id", "total_amount", "delivery_date"],
+      "is_active": true,
+      "created_at": "2024-01-01T12:00:00Z",
+      "updated_at": "2024-01-01T12:00:00Z",
+      "deleted_at": null
+    }
+  },
+  {
+    "model": "core.notificationtemplate",
+    "pk": 4,
+    "fields": {
+      "name": "Push Notification Alert",
+      "template_type": "push",
+      "subject": "New Message",
+      "content": "You have a new message from {{sender_name}}",
+      "variables": ["sender_name"],
+      "is_active": true,
+      "created_at": "2024-01-01T13:00:00Z",
+      "updated_at": "2024-01-01T13:00:00Z",
+      "deleted_at": null
+    }
+  },
+  {
+    "model": "core.notificationtemplate",
+    "pk": 5,
+    "fields": {
+      "name": "Inactive Template",
+      "template_type": "email",
+      "subject": "Inactive Template",
+      "content": "This template is inactive",
+      "variables": [],
+      "is_active": false,
+      "created_at": "2024-01-01T14:00:00Z",
+      "updated_at": "2024-01-01T15:00:00Z",
+      "deleted_at": "2024-01-01T15:00:00Z"
+    }
+  }
+]
