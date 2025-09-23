@@ -170,7 +170,11 @@ class NotificationLog(models.Model):
             models.Index(fields=['status', 'priority']),
             models.Index(fields=['type', 'status']),
             models.Index(fields=['status', 'retry_count']),
-            models.Index(fields=['next_retry_at'], condition=models.Q(status='failed')),
+            models.Index(
+                fields=['next_retry_at'], 
+                condition=models.Q(status='failed'),
+                name='notification_failed_retry_idx'
+            ),
             models.Index(fields=['correlation_id']),
         ]
     

@@ -7,7 +7,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/', include('api.v1.urls')),
+    path('api/', include('api.urls')),
     path('health/', include('health_check.urls')),
     
     # OpenAPI Schema

@@ -31,9 +31,6 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_extensions',
-    'health_check',
-    'health_check.db',
-    'health_check.cache',
 ]
 
 LOCAL_APPS = [
@@ -56,7 +53,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'infrastructure.middleware.RequestIDMiddleware',
-    'infrastructure.middleware.RateLimitMiddleware',
+    'api.v1.middleware.RateLimitMiddleware',
+    'api.v1.middleware.APIVersionMiddleware',
+    'api.v1.middleware.RequestLoggingMiddleware',
     'infrastructure.middleware.OpenTelemetryMiddleware',
 ]
 
@@ -153,9 +152,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'api.pagination.StandardResultsSetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_RENDERER_CLASSES': [
