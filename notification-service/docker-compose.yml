@@ -18,13 +18,28 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis for Caching and Message Broker
+  # Redis for Caching
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ for Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,10 +53,13 @@ services:
       - DEBUG=True
       - DB_HOST=postgres
       - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672//
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     volumes:
       - .:/app
@@ -57,9 +75,11 @@ services:
       - DEBUG=True
       - DB_HOST=postgres
       - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672//
     depends_on:
       - postgres
       - redis
+      - rabbitmq
     volumes:
       - .:/app
     command: celery -A notification_service worker --loglevel=info
@@ -71,9 +91,11 @@ services:
       - DEBUG=True
       - DB_HOST=postgres
       - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672//
     depends_on:
       - postgres
       - redis
+      - rabbitmq
     volumes:
       - .:/app
     command: celery -A notification_service beat --loglevel=info

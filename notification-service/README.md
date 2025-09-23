@@ -105,7 +105,7 @@ notification-service/
 - **Framework**: Django 4.2 + Django REST Framework
 - **Database**: PostgreSQL with optimized indexing
 - **Cache**: Redis for templates and preferences
-- **Message Queue**: Celery with Redis/RabbitMQ
+- **Message Queue**: Celery with RabbitMQ broker
 - **Monitoring**: OpenTelemetry + Prometheus + Grafana
 - **Documentation**: OpenAPI/Swagger with drf-spectacular
 - **Testing**: pytest with 80%+ coverage target
@@ -169,7 +169,8 @@ docker-compose up -d
 
 Includes:
 - PostgreSQL database
-- Redis cache/message broker
+- RabbitMQ message broker
+- Redis cache
 - Notification service
 - Celery workers
 - Prometheus metrics

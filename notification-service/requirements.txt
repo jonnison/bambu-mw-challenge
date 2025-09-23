@@ -12,6 +12,8 @@ django-extensions==3.2.3
 celery==5.3.4
 redis==5.0.1
 kombu==5.3.4
+amqp==5.2.0
+billiard==4.2.0
 
 # Monitoring and Observability
 opentelemetry-api==1.21.0
