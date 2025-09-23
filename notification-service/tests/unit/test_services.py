@@ -14,9 +14,13 @@ from core.models import (
 )
 from core.services import (
     NotificationService,
-    TemplateService,
-    PreferenceService
+    NotificationTemplateService,
+    UserPreferenceService
 )
+
+# Aliases for backward compatibility
+TemplateService = NotificationTemplateService
+PreferenceService = UserPreferenceService
 
 
 class NotificationServiceTest(TestCase):
