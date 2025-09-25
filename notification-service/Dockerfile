@@ -22,8 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . /app/
 
-# Create non-root user
+# Create non-root user and staticfiles directory
 RUN groupadd -r django && useradd -r -g django django
+RUN mkdir -p /app/staticfiles
 RUN chown -R django:django /app
 USER django
 

@@ -52,6 +52,7 @@ services:
       - DB_HOST=postgres
       - REDIS_URL=redis://redis:6379/0
       - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672//
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,notification-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,10 +62,13 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
+    user: "0:0"
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             python manage.py runserver 0.0.0.0:8000"
+      sh -c "mkdir -p /app/staticfiles &&
+             chown -R django:django /app/staticfiles &&
+             su django -c 'python manage.py migrate' &&
+             su django -c 'python manage.py collectstatic --noinput' &&
+             su django -c 'python manage.py runserver 0.0.0.0:8000'"
 
   # Celery Worker
   celery-worker:
