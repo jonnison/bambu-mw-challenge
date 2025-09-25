@@ -19,14 +19,15 @@ def django_db_setup():
     settings.DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ':memory:',
+        'ATOMIC_REQUESTS': True,
     }
 
 
 @pytest.fixture
 def api_client():
     """Provide API client for testing."""
-    from rest_framework.test import APIClient
-    return APIClient()
+    from django.test.client import Client
+    return Client()
 
 
 @pytest.fixture
@@ -35,10 +36,9 @@ def sample_template():
     from core.models import NotificationTemplate
     return NotificationTemplate.objects.create(
         name='Test Template',
-        template_type='email',
-        content='Hello {{user_name}}!',
-        subject='Test Subject',
-        variables=['user_name']
+        type='email',
+        body='Hello {{user_name}}!',
+        subject='Test Subject'
     )
 
 
@@ -47,10 +47,10 @@ def sample_user_preference():
     """Provide a sample user preference."""
     from core.models import UserPreference
     return UserPreference.objects.create(
-        user_id='test_user',
-        channel='email',
-        enabled=True,
-        frequency='immediate'
+        user_id=123,
+        email_enabled=True,
+        sms_enabled=False,
+        push_enabled=True
     )
 
 
@@ -59,10 +59,9 @@ def sample_quota():
     """Provide a sample notification quota."""
     from core.models import NotificationQuota
     return NotificationQuota.objects.create(
-        user_id='test_user',
-        channel='email',
-        quota_limit=100,
-        quota_used=25
+        user_id=123,
+        notification_type='email',
+        count=25
     )
 
 
