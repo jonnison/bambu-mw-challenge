@@ -72,6 +72,11 @@ dmypy.json
 *.sublime-workspace
 *.sublime-project
 
+# Django
+staticfiles/
+*.sqlite3
+local_settings.py
+
 # Misc
 *.log
 
