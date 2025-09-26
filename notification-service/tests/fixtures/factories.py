@@ -19,32 +19,30 @@ class NotificationTemplateFactory(DjangoModelFactory):
     class Meta:
         model = NotificationTemplate
     
-    name = factory.Sequence(lambda n: f"Template {n}")
-    template_type = factory.Iterator(['email', 'sms', 'push', 'in_app'])
+    name = factory.Sequence(lambda n: f"template_{n}")
+    type = factory.Iterator(['email', 'sms', 'push'])
     subject = factory.Faker('sentence', nb_words=4)
-    content = factory.Faker('text', max_nb_chars=200)
-    variables = factory.LazyFunction(lambda: ['user_name', 'date'])
-    is_active = True
-    created_at = factory.LazyFunction(timezone.now)
-    updated_at = factory.LazyFunction(timezone.now)
+    body = factory.Faker('text', max_nb_chars=200)
+    variables = factory.LazyFunction(lambda: {'user_name': 'string', 'date': 'datetime'})
+    active = True
 
 
 class EmailTemplateFactory(NotificationTemplateFactory):
     """Factory for creating email notification templates."""
     
-    template_type = 'email'
+    type = 'email'
     subject = factory.Faker('sentence', nb_words=6)
-    content = "Hello {{user_name}}, " + factory.Faker('text', max_nb_chars=150)
-    variables = ['user_name']
+    body = "Hello {{user_name}}, this is a test email template with dynamic content."
+    variables = {'user_name': 'string'}
 
 
 class SMSTemplateFactory(NotificationTemplateFactory):
     """Factory for creating SMS notification templates."""
     
-    template_type = 'sms'
+    type = 'sms'
     subject = None
-    content = factory.Faker('text', max_nb_chars=160)  # SMS character limit
-    variables = ['user_name', 'code']
+    body = factory.Faker('text', max_nb_chars=160)  # SMS character limit
+    variables = {'user_name': 'string', 'code': 'string'}
 
 
 class PushTemplateFactory(NotificationTemplateFactory):
@@ -62,12 +60,14 @@ class UserPreferenceFactory(DjangoModelFactory):
     class Meta:
         model = UserPreference
     
-    user_id = factory.Sequence(lambda n: f"user{n}")
-    channel = factory.Iterator(['email', 'sms', 'push', 'in_app'])
-    enabled = True
-    frequency = factory.Iterator(['immediate', 'hourly', 'daily', 'weekly'])
-    created_at = factory.LazyFunction(timezone.now)
-    updated_at = factory.LazyFunction(timezone.now)
+    user_id = factory.Sequence(lambda n: n)  # Should be integer
+    email_enabled = True
+    sms_enabled = True
+    push_enabled = True
+    timezone = 'UTC'
+    max_emails_per_day = 50
+    max_sms_per_day = 10
+    frequency_preference = factory.LazyFunction(lambda: {})
 
 
 class NotificationQuotaFactory(DjangoModelFactory):
@@ -92,23 +92,17 @@ class NotificationLogFactory(DjangoModelFactory):
         model = NotificationLog
     
     template = factory.SubFactory(NotificationTemplateFactory)
-    user_id = factory.Sequence(lambda n: f"user{n}")
+    user_id = factory.Sequence(lambda n: n)  # Should be integer, not string
     recipient = factory.Faker('email')
-    status = factory.Iterator(['pending', 'sent', 'delivered', 'failed', 'read'])
-    channel = factory.Iterator(['email', 'sms', 'push', 'in_app'])
-    content = factory.Faker('text', max_nb_chars=200)
+    status = factory.Iterator(['pending', 'sent', 'failed', 'bounced', 'retry'])
+    type = factory.Iterator(['email', 'sms', 'push'])
+    priority = factory.Iterator(['low', 'normal', 'high', 'urgent'])
+    subject = factory.Faker('sentence', nb_words=4)
+    body = factory.Faker('text', max_nb_chars=200)
     error_message = None
-    sent_at = factory.Maybe(
-        'status',
-        yes_declaration=factory.LazyFunction(timezone.now),
-        no_declaration=None,
-        condition=lambda status: status in ['sent', 'delivered', 'read']
-    )
-    delivered_at = factory.Maybe(
-        'status',
-        yes_declaration=factory.LazyFunction(timezone.now),
-        no_declaration=None,
-        condition=lambda status: status in ['delivered', 'read']
+    retry_count = 0
+    sent_at = factory.LazyAttribute(
+        lambda obj: timezone.now() if obj.status == 'sent' else None
     )
     created_at = factory.LazyFunction(timezone.now)
     updated_at = factory.LazyFunction(timezone.now)

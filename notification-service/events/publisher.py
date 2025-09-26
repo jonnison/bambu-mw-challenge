@@ -18,8 +18,8 @@ class NotificationEvent:
     event_type: str
     aggregate_id: str
     user_id: int
-    correlation_id: Optional[str]
     timestamp: str
+    correlation_id: Optional[str] = None
     version: int = 1
     
     def to_dict(self) -> Dict[str, Any]:
@@ -31,14 +31,13 @@ class NotificationEvent:
         return json.dumps(self.to_dict(), default=str)
 
 
-@dataclass
 class NotificationRequestedEvent(NotificationEvent):
     """Event published when a notification is requested."""
     template_name: str
     notification_type: str
     priority: str
     recipient: str
-    metadata: Dict[str, Any]
+    metadata: Dict[str, Any] = None
     
     def __init__(
         self, 
@@ -66,14 +65,13 @@ class NotificationRequestedEvent(NotificationEvent):
         self.metadata = metadata or {}
 
 
-@dataclass
 class NotificationSentEvent(NotificationEvent):
     """Event published when a notification is successfully sent."""
     notification_type: str
     provider: str
     provider_id: str
     sent_at: str
-    metadata: Dict[str, Any]
+    metadata: Dict[str, Any] = None
     
     def __init__(
         self,
@@ -100,14 +98,13 @@ class NotificationSentEvent(NotificationEvent):
         self.metadata = metadata or {}
 
 
-@dataclass
 class NotificationFailedEvent(NotificationEvent):
     """Event published when a notification fails to send."""
     notification_type: str
     error_message: str
     retry_count: int
-    next_retry_at: Optional[str]
-    metadata: Dict[str, Any]
+    next_retry_at: Optional[str] = None
+    metadata: Dict[str, Any] = None
     
     def __init__(
         self,
