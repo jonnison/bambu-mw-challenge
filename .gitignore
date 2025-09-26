@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+.env
+
 # Distribution / packaging
 .Python
 build/
@@ -79,6 +81,10 @@ local_settings.py
 
 # Misc
 *.log
+
+# Celery
+celerybeat-schedule*
+celerybeat.pid
 
 # Documentation
 IMPLEMENTATION_CHECKLIST.md

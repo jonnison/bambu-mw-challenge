@@ -84,23 +84,10 @@ services:
       - rabbitmq
     volumes:
       - .:/app
-    command: celery -A notification_service worker --loglevel=info
-
-  # Celery Beat (Scheduler)
-  celery-beat:
-    build: .
-    environment:
-      - DEBUG=True
-      - DB_HOST=postgres
-      - REDIS_URL=redis://redis:6379/0
-      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672//
-    depends_on:
-      - postgres
-      - redis
-      - rabbitmq
-    volumes:
-      - .:/app
-    command: celery -A notification_service beat --loglevel=info
+    user: "0:0"
+    command: >
+      sh -c "chown -R django:django /app &&
+             su django -c 'celery -A notification_service worker --loglevel=info'"
 
   # Prometheus for Metrics
   prometheus:
