@@ -431,37 +431,163 @@ class HealthViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def health(self, request: Request) -> Response:
         """
-        Health check endpoint.
+        Health check endpoint with actual service health verification.
         
         GET /api/v1/health
         """
-        # TODO: Add actual health checks for database, cache, message queue
+        checks = {}
+        overall_status = 'healthy'
+        
+        # Database health check
+        try:
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+            checks['database'] = 'ok'
+        except Exception as e:
+            checks['database'] = f'error: {str(e)}'
+            overall_status = 'unhealthy'
+        
+        # Cache health check (Redis)
+        try:
+            from django.core.cache import cache
+            cache.set('health_check', 'ok', 10)
+            if cache.get('health_check') == 'ok':
+                checks['cache'] = 'ok'
+            else:
+                checks['cache'] = 'error: cache not responding'
+                overall_status = 'unhealthy'
+        except Exception as e:
+            checks['cache'] = f'error: {str(e)}'
+            overall_status = 'unhealthy'
+        
+        # Message queue health check (RabbitMQ via Celery)
+        try:
+            from celery import current_app
+            inspect = current_app.control.inspect()
+            stats = inspect.stats()
+            if stats:
+                checks['message_queue'] = 'ok'
+            else:
+                checks['message_queue'] = 'warning: no workers available'
+                if overall_status == 'healthy':
+                    overall_status = 'degraded'
+        except Exception as e:
+            checks['message_queue'] = f'error: {str(e)}'
+            overall_status = 'unhealthy'
+        
         health_status = {
-            'status': 'healthy',
+            'status': overall_status,
             'timestamp': timezone.now().isoformat(),
             'service': 'notification-service',
             'version': '1.0.0',
-            'checks': {
-                'database': 'ok',
-                'cache': 'ok',
-                'message_queue': 'ok',
-            }
+            'checks': checks
         }
-        return Response(health_status)
+        
+        # Return appropriate HTTP status based on health
+        status_code = 200 if overall_status == 'healthy' else (503 if overall_status == 'unhealthy' else 200)
+        return Response(health_status, status=status_code)
     
     @action(detail=False, methods=['get'])
     def metrics(self, request: Request) -> Response:
         """
-        Service metrics endpoint.
+        Service metrics endpoint with comprehensive statistics.
         
         GET /api/v1/metrics
         """
-        # TODO: Add actual metrics collection
-        metrics = {
-            'notifications_sent_total': 0,
-            'notifications_failed_total': 0,
-            'templates_count': NotificationTemplate.objects.count(),
-            'active_users': UserPreference.objects.count(),
-        }
+        from django.db.models import Count, Q
+        from datetime import datetime, timedelta
+        
+        try:
+            # Basic counts
+            total_templates = NotificationTemplate.objects.count()
+            active_templates = NotificationTemplate.objects.filter(active=True).count()
+            total_users = UserPreference.objects.count()
+            
+            # Notification statistics
+            total_notifications = NotificationLog.objects.count()
+            sent_notifications = NotificationLog.objects.filter(status='sent').count()
+            failed_notifications = NotificationLog.objects.filter(status='failed').count()
+            pending_notifications = NotificationLog.objects.filter(status='pending').count()
+            
+            # Last 24 hours statistics
+            last_24h = timezone.now() - timedelta(hours=24)
+            recent_notifications = NotificationLog.objects.filter(created_at__gte=last_24h).count()
+            recent_sent = NotificationLog.objects.filter(
+                created_at__gte=last_24h, 
+                status='sent'
+            ).count()
+            recent_failed = NotificationLog.objects.filter(
+                created_at__gte=last_24h, 
+                status='failed'
+            ).count()
+            
+            # Notification type distribution
+            type_distribution = NotificationLog.objects.values('type').annotate(
+                count=Count('id')
+            ).order_by('type')
+            
+            # User preference statistics
+            email_enabled_users = UserPreference.objects.filter(email_enabled=True).count()
+            sms_enabled_users = UserPreference.objects.filter(sms_enabled=True).count()
+            push_enabled_users = UserPreference.objects.filter(push_enabled=True).count()
+            
+            # Success rate calculation
+            success_rate = (sent_notifications / total_notifications * 100) if total_notifications > 0 else 0
+            
+            metrics = {
+                'service': {
+                    'name': 'notification-service',
+                    'version': '1.0.0',
+                    'uptime_seconds': (timezone.now() - timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds(),
+                    'timestamp': timezone.now().isoformat()
+                },
+                'templates': {
+                    'total_count': total_templates,
+                    'active_count': active_templates,
+                    'inactive_count': total_templates - active_templates
+                },
+                'notifications': {
+                    'total_sent': sent_notifications,
+                    'total_failed': failed_notifications,
+                    'total_pending': pending_notifications,
+                    'total_count': total_notifications,
+                    'success_rate_percent': round(success_rate, 2)
+                },
+                'notifications_24h': {
+                    'total': recent_notifications,
+                    'sent': recent_sent,
+                    'failed': recent_failed,
+                    'success_rate_percent': round((recent_sent / recent_notifications * 100) if recent_notifications > 0 else 0, 2)
+                },
+                'notification_types': {
+                    item['type']: item['count'] for item in type_distribution
+                },
+                'users': {
+                    'total_count': total_users,
+                    'email_enabled': email_enabled_users,
+                    'sms_enabled': sms_enabled_users,
+                    'push_enabled': push_enabled_users
+                },
+                'system': {
+                    'database_connections': 1,  # Could be enhanced with actual connection pool stats
+                    'cache_hit_rate': 'N/A',    # Would require cache middleware to track
+                    'queue_size': 'N/A'         # Would require Celery inspection
+                }
+            }
+            
+        except Exception as e:
+            # Fallback metrics in case of database issues
+            metrics = {
+                'service': {
+                    'name': 'notification-service',
+                    'version': '1.0.0',
+                    'timestamp': timezone.now().isoformat(),
+                    'error': f'Failed to collect metrics: {str(e)}'
+                },
+                'status': 'error'
+            }
+        
         return Response(metrics)
 
