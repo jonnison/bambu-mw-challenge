@@ -25,6 +25,7 @@ class NotificationRequest:
     template_name: str
     context: Dict[str, Any]
     priority: str = 'normal'
+    notification_type: Optional[str] = None
     correlation_id: Optional[uuid.UUID] = None
     scheduled_at: Optional[datetime] = None
 
@@ -143,40 +144,43 @@ class NotificationService:
             if not template:
                 raise ValueError(f"Template '{request.template_name}' not found")
             
+            # Determine notification type (use override if provided, otherwise template type)
+            notification_type = request.notification_type if request.notification_type else template.type
+            
             # Get user preferences
             preferences = self.preference_repository.get_by_user_id(request.user_id)
             if preferences:
                 # Check if notification type is allowed
-                if not preferences.is_notification_allowed(template.type):
+                if not preferences.is_notification_allowed(notification_type):
                     return NotificationResult(
                         notification_id=uuid.uuid4(),
                         status='blocked',
-                        error_message='Notification blocked by user preferences'
+                        error_message=f'Notification type {notification_type} blocked by user preferences'
                     )
                 
                 # Check daily quota
                 today = date.today()
-                max_count = getattr(preferences, f'max_{template.type}s_per_day', 50)
+                max_count = getattr(preferences, f'max_{notification_type}s_per_day', 50)
                 if self.quota_repository.check_quota_exceeded(
-                    request.user_id, template.type, max_count, today
+                    request.user_id, notification_type, max_count, today
                 ):
                     return NotificationResult(
                         notification_id=uuid.uuid4(),
                         status='quota_exceeded',
-                        error_message=f'Daily {template.type} quota exceeded'
+                        error_message=f'Daily {notification_type} quota exceeded'
                     )
             
             # Render template
             rendered = self.template_service.render_template(template, request.context)
             
             # Determine recipient based on type and context
-            recipient = self._get_recipient(template.type, request.context, request.user_id)
+            recipient = self._get_recipient(notification_type, request.context, request.user_id)
             
             # Create notification log
             log_data = {
                 'user_id': request.user_id,
                 'template': template,
-                'type': template.type,
+                'type': notification_type,
                 'priority': request.priority,
                 'recipient': recipient,
                 'subject': rendered['subject'],
@@ -186,7 +190,9 @@ class NotificationService:
                 'metadata': {
                     'template_name': request.template_name,
                     'context_keys': list(request.context.keys()),
-                    'scheduled_at': request.scheduled_at.isoformat() if request.scheduled_at else None
+                    'scheduled_at': request.scheduled_at.isoformat() if request.scheduled_at else None,
+                    'original_template_type': template.type,
+                    'effective_notification_type': notification_type
                 }
             }
             
@@ -195,7 +201,7 @@ class NotificationService:
             # Increment quota
             if preferences:
                 self.quota_repository.increment_count(
-                    request.user_id, template.type, date.today()
+                    request.user_id, notification_type, date.today()
                 )
             
             # Queue for async processing (would trigger Celery task in real implementation)
@@ -233,10 +239,10 @@ class NotificationService:
             user_id, limit, offset, status, notification_type, date_from, date_to
         )
     
-    def update_notification_status(self, notification_id: uuid.UUID, status: str) -> Optional[NotificationLog]:
+    def update_notification_status(self, notification_id: uuid.UUID, status: str, **kwargs) -> Optional[NotificationLog]:
         """Update notification status."""
         try:
-            return self.log_repository.update_status(notification_id, status)
+            return self.log_repository.update_status(notification_id, status, **kwargs)
         except Exception as e:
             logger.error(f"Failed to update notification status: {e}")
             return None

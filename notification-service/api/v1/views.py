@@ -14,7 +14,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiPara
 from drf_spectacular.types import OpenApiTypes
 
 from core.models import NotificationTemplate, NotificationLog, UserPreference
-from core.services import NotificationService, NotificationTemplateService, UserPreferenceService
+from core.services import NotificationRequest, NotificationService, NotificationTemplateService, UserPreferenceService
 from core.repositories import (
     DjangoNotificationTemplateRepository,
     DjangoNotificationLogRepository, 
@@ -110,7 +110,7 @@ class NotificationTemplateViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create template using business service."""
         template_data = serializer.validated_data
-        template = self.template_service.create_template(**template_data)
+        template = self.template_service.create_template(template_data)
         serializer.instance = template
     
     def perform_update(self, serializer):
@@ -118,7 +118,7 @@ class NotificationTemplateViewSet(viewsets.ModelViewSet):
         template_data = serializer.validated_data
         template = self.template_service.update_template(
             template_id=self.get_object().id,
-            **template_data
+            update_data=template_data
         )
         serializer.instance = template
     
@@ -206,21 +206,35 @@ class NotificationViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         
         try:
-            notification_log = self.notification_service.send_notification(
-                user_id=serializer.validated_data['user_id'],
-                template_name=serializer.validated_data['template_name'],
-                context=serializer.validated_data.get('context', {}),
-                notification_type=serializer.validated_data.get('notification_type'),
-                priority=serializer.validated_data.get('priority', 'normal'),
+            notification_result = self.notification_service.send_notification(
+                NotificationRequest(
+                    user_id=serializer.validated_data['user_id'],
+                    template_name=serializer.validated_data['template_name'],
+                    context=serializer.validated_data.get('context', {}),
+                    notification_type=serializer.validated_data.get('notification_type'),
+                    priority=serializer.validated_data.get('priority', 'normal'),
+                )
             )
             
+            # Determine appropriate message based on status
+            if notification_result.status == 'queued':
+                message = 'Notification queued for delivery'
+            elif notification_result.status == 'blocked':
+                message = notification_result.error_message or 'Notification blocked by user preferences'
+            elif notification_result.status == 'quota_exceeded':
+                message = notification_result.error_message or 'Daily notification quota exceeded'
+            elif notification_result.status == 'failed':
+                message = notification_result.error_message or 'Notification failed'
+            else:
+                message = f'Notification status: {notification_result.status}'
+            
             response_serializer = NotificationResponseSerializer({
-                'id': notification_log.id,
-                'status': notification_log.status,
-                'message': 'Notification queued for delivery',
-                'user_id': notification_log.user_id,
+                'id': notification_result.notification_id,
+                'status': notification_result.status,
+                'message': message,
+                'user_id': serializer.validated_data['user_id'],
                 'template_name': serializer.validated_data['template_name'],
-                'notification_type': notification_log.type,
+                'notification_type': serializer.validated_data.get('notification_type'),
             })
             
             return Response(
@@ -294,7 +308,7 @@ class NotificationViewSet(viewsets.ViewSet):
             # Update status using business service
             updated_notification = self.notification_service.update_notification_status(
                 notification_id=notification.id,
-                new_status=serializer.validated_data['status'],
+                status=serializer.validated_data['status'],
                 error_message=serializer.validated_data.get('error_message'),
             )
             
@@ -352,53 +366,49 @@ class UserPreferenceViewSet(viewsets.ViewSet):
         preference_repository = DjangoUserPreferenceRepository()
         self.preference_service = UserPreferenceService(preference_repository)
     
-    @action(detail=False, methods=['get'], url_path='user/(?P<user_id>[^/.]+)')
-    def get_preferences(self, request: Request, user_id: str = None) -> Response:
+    @action(detail=False, methods=['get', 'put'], url_path='user/(?P<user_id>[^/.]+)')
+    def user_preferences(self, request: Request, user_id: str = None) -> Response:
         """
-        Get user preferences.
+        Get or update user preferences.
         
-        GET /api/v1/preferences/user/{user_id}
+        GET /api/v1/preferences/user/{user_id} - Get user preferences
+        PUT /api/v1/preferences/user/{user_id} - Update user preferences
         """
-        try:
-            preferences = self.preference_service.get_user_preferences(int(user_id))
-            serializer = UserPreferenceSerializer(preferences)
-            return Response(serializer.data)
-            
-        except UserPreference.DoesNotExist:
-            # Create default preferences if they don't exist
-            preferences = self.preference_service.get_or_create_preferences(int(user_id))
-            serializer = UserPreferenceSerializer(preferences)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    
-    @action(detail=False, methods=['put'], url_path='user/(?P<user_id>[^/.]+)')
-    def update_preferences(self, request: Request, user_id: str = None) -> Response:
-        """
-        Update user preferences.
+        if request.method == 'GET':
+            try:
+                preferences = self.preference_service.get_user_preferences(int(user_id))
+                serializer = UserPreferenceSerializer(preferences)
+                return Response(serializer.data)
+                
+            except UserPreference.DoesNotExist:
+                # Create default preferences if they don't exist
+                preferences = self.preference_service.get_or_create_preferences(int(user_id))
+                serializer = UserPreferenceSerializer(preferences)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
-        PUT /api/v1/preferences/user/{user_id}
-        """
-        try:
-            serializer = PreferenceUpdateSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            
-            preferences = self.preference_service.update_user_preferences(
-                user_id=int(user_id),
-                **serializer.validated_data
-            )
-            
-            response_serializer = UserPreferenceSerializer(preferences)
-            return Response(response_serializer.data)
-            
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        elif request.method == 'PUT':
+            try:
+                serializer = PreferenceUpdateSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                
+                preferences = self.preference_service.update_user_preferences(
+                    user_id=int(user_id),
+                    preferences=serializer.validated_data
+                )
+                
+                response_serializer = UserPreferenceSerializer(preferences)
+                return Response(response_serializer.data)
+                
+            except Exception as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
 
 @extend_schema_view(

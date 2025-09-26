@@ -12,7 +12,7 @@ class NotificationTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationTemplate
         fields = [
-            'id', 'name', 'subject', 'body', 'type', 'variables', 
+            'id', 'active', 'name', 'subject', 'body', 'type', 'variables', 
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -155,7 +155,7 @@ class SendNotificationSerializer(serializers.Serializer):
 class NotificationResponseSerializer(serializers.Serializer):
     """Serializer for notification send response."""
     
-    id = serializers.IntegerField()
+    id = serializers.UUIDField()
     status = serializers.CharField()
     message = serializers.CharField()
     user_id = serializers.IntegerField()
